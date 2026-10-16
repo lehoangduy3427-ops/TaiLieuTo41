@@ -15,21 +15,25 @@
   <!-- MÀN HÌNH CHƯA ĐĂNG NHẬP -->
   <div id="login-screen" class="flex-1 flex items-center justify-center p-4">
     <div class="bg-white max-w-md w-full rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
-      <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-md">
+      <div class="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-md">
         Y+
       </div>
       <h1 class="text-2xl font-bold text-slate-900 mb-2">Hệ Thống Học Tập Y Khoa</h1>
       <p class="text-slate-500 text-sm mb-6">Lưu trữ Slide, Note, Video bài giảng và Ngân hàng trắc nghiệm từ Y1 đến Y6. Vui lòng đăng nhập để truy cập.</p>
-      <button id="btn-login" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow transition flex items-center justify-center gap-3">
+      
+      <!-- NÚT ĐĂNG NHẬP MÀU XANH LÁ (BẢN V2) -->
+      <button id="btn-login" onclick="window.triggerGoogleLogin()" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow transition flex items-center justify-center gap-3 cursor-pointer">
         <svg class="w-5 h-5 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
           <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
           <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"/>
           <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"/>
         </svg>
-        Đăng nhập bằng Google
+        <span id="btn-login-text">Đăng nhập bằng Google (Bản chuẩn v2)</span>
       </button>
-      <p id="auth-error" class="text-xs text-rose-600 mt-4 hidden"></p>
+
+      <!-- HỘP HIỂN THỊ TRẠNG THÁI TRỰC TIẾP -->
+      <div id="status-box" class="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-xs text-left hidden"></div>
     </div>
   </div>
 
@@ -153,300 +157,41 @@
     </div>
   </div>
 
+  <!-- BỘ DÒ LỖI TRỰC TIẾP (CHẠY NGAY KHI BẤM NÚT DÙ FIREBASE CHƯA TẢI XONG) -->
+  <script>
+    function showStatus(msg) {
+      const box = document.getElementById("status-box");
+      box.classList.remove("hidden");
+      box.innerHTML = msg;
+    }
+
+    window.triggerGoogleLogin = function() {
+      document.getElementById("btn-login-text").innerText = "Đang kết nối tới Google...";
+      showStatus("⏳ <b>Bước 1:</b> Nút bấm đã nhận lệnh! Đang kiểm tra kết nối Firebase...<br>📍 Địa chỉ trang hiện tại: <code>" + window.location.href + "</code>");
+
+      if (window.location.protocol === "file:") {
+        showStatus("❌ <b>Phát hiện nguyên nhân:</b> Bạn đang mở file trực tiếp từ ổ cứng máy tính (<code>file:///</code>). Google chặn đăng nhập ở chế độ này.<br>👉 <b>Cách sửa:</b> Hãy mở đường link trang web trên GitHub Pages (có dạng <code>https://...github.io/...</code>) để đăng nhập nhé!");
+        return;
+      }
+
+      if (typeof window.startFirebaseLogin === "function") {
+        window.startFirebaseLogin();
+      } else {
+        showStatus("⚠️ <b>Phát hiện nguyên nhân:</b> Bộ thư viện Firebase chưa tải xong hoặc bị mạng chặn. Vui lòng đợi 3 giây rồi bấm lại, hoặc kiểm tra kết nối mạng.");
+      }
+    };
+  </script>
+
   <!-- LOGIC FIREBASE & ỨNG DỤNG -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ĐÃ SỬA CHUẨN API KEY CHO BẠN (Bỏ chữ A bị thừa ở đầu)
     const firebaseConfig = {
       apiKey: "AIzaSyC4RLqnlarYcjfEoGwRAP8572AfpcZ8XyM",
       authDomain: "tai-lieu-to-41-yds.firebaseapp.com",
       projectId: "tai-lieu-to-41-yds",
       storageBucket: "tai-lieu-to-41-yds.firebasestorage.app",
       messagingSenderId: "993017623598",
-      appId: "1:993017623598:web:c41eca8e4bcdb79e739bbf"
-    };
-
-    // ĐÃ THÊM DẤU NGOẶC KÉP MỞ CHO EMAIL CỦA BẠN
-    const ADMIN_EMAILS = [
-      "lehoangduy3427@gmail.com"
-    ];
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
-
-    let currentUser = null;
-    let isAdminUser = false;
-    let currentYear = "Y1";
-    let currentType = "ALL";
-    let allItems = [];
-
-    document.getElementById("btn-login").addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (err) {
-        const errEl = document.getElementById("auth-error");
-        errEl.classList.remove("hidden");
-        errEl.innerText = "Lỗi đăng nhập: " + err.code + " - " + err.message;
-        console.error(err);
-      }
-    });
-
-    document.getElementById("btn-logout").onclick = () => signOut(auth);
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        isAdminUser = ADMIN_EMAILS.includes(user.email);
-        document.getElementById("login-screen").classList.add("hidden");
-        document.getElementById("app-screen").classList.remove("hidden");
-        document.getElementById("user-badge").innerText = `${user.email} (${isAdminUser ? 'Quản trị viên - Admin' : 'Thành viên'})`;
-        
-        if (isAdminUser) {
-          document.getElementById("btn-open-admin").classList.remove("hidden");
-        } else {
-          document.getElementById("btn-open-admin").classList.add("hidden");
-        }
-        await loadItems();
-      } else {
-        document.getElementById("login-screen").classList.remove("hidden");
-        document.getElementById("app-screen").classList.add("hidden");
-      }
-    });
-
-    async function loadItems() {
-      const q = query(collection(db, "medical_resources"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
-      allItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderList();
-    }
-
-    function renderList() {
-      const listEl = document.getElementById("items-list");
-      const keyword = document.getElementById("search-input").value.toLowerCase();
-
-      const filtered = allItems.filter(item => {
-        const matchYear = item.year === currentYear;
-        const matchType = currentType === "ALL" || item.type === currentType;
-        const matchSearch = item.title.toLowerCase().includes(keyword) || item.subject.toLowerCase().includes(keyword);
-        return matchYear && matchType && matchSearch;
-      });
-
-      if (filtered.length === 0) {
-        listEl.innerHTML = `<div class="p-6 text-center text-sm text-slate-400 bg-white rounded-xl border">Chưa có tài liệu nào trong mục này.</div>`;
-        return;
-      }
-
-      const badgeColors = {
-        SLIDE: "bg-blue-100 text-blue-700",
-        NOTE: "bg-amber-100 text-amber-700",
-        VIDEO: "bg-rose-100 text-rose-700",
-        QUIZ: "bg-purple-100 text-purple-700"
-      };
-
-      listEl.innerHTML = filtered.map(item => `
-        <div class="bg-white p-3.5 rounded-xl border border-slate-200 hover:border-blue-500 transition cursor-pointer shadow-sm flex justify-between items-start gap-2" data-id="${item.id}">
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeColors[item.type]}">${item.type}</span>
-              <span class="text-xs font-medium text-slate-500">${item.subject}</span>
-            </div>
-            <h3 class="font-semibold text-sm text-slate-800">${item.title}</h3>
-          </div>
-          ${isAdminUser ? `<button class="btn-delete text-xs text-red-500 hover:underline px-2 py-1" data-del="${item.id}">Xóa</button>` : ''}
-        </div>
-      `).join("");
-
-      listEl.querySelectorAll("[data-id]").forEach(el => {
-        el.onclick = (e) => {
-          if (e.target.classList.contains("btn-delete")) return;
-          const item = allItems.find(i => i.id === el.dataset.id);
-          openViewer(item);
-        };
-      });
-
-      listEl.querySelectorAll(".btn-delete").forEach(btn => {
-        btn.onclick = async (e) => {
-          e.stopPropagation();
-          if (confirm("Bạn có chắc chắn muốn xóa mục này?")) {
-            await deleteDoc(doc(db, "medical_resources", btn.dataset.del));
-            await loadItems();
-          }
-        };
-      });
-    }
-
-    function convertToEmbedUrl(url) {
-      if (!url) return "";
-      const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if (driveMatch) return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
-      const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
-      if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
-      return url;
-    }
-
-    function openViewer(item) {
-      const viewer = document.getElementById("viewer-container");
-      if (item.type !== "QUIZ") {
-        const embedUrl = convertToEmbedUrl(item.url);
-        viewer.innerHTML = `
-          <div class="w-full h-full flex flex-col">
-            <div class="flex justify-between items-center mb-3 pb-2 border-b">
-              <div>
-                <span class="text-xs font-semibold text-blue-600">${item.year} • ${item.subject}</span>
-                <h2 class="text-lg font-bold text-slate-900">${item.title}</h2>
-              </div>
-              <a href="${item.url}" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium">Mở tab gốc ↗</a>
-            </div>
-            <iframe src="${embedUrl}" class="w-full flex-1 min-h-[500px] rounded-lg border" allow="autoplay; fullscreen"></iframe>
-          </div>
-        `;
-      } else {
-        renderQuiz(item, viewer);
-      }
-    }
-
-    function renderQuiz(item, container) {
-      const questions = item.questions || [];
-      let score = 0;
-      let answeredCount = 0;
-
-      container.innerHTML = `
-        <div class="w-full text-left space-y-6">
-          <div class="border-b pb-3 flex justify-between items-center">
-            <div>
-              <span class="text-xs font-semibold text-purple-600">${item.year} • ${item.subject}</span>
-              <h2 class="text-lg font-bold text-slate-900">${item.title} (${questions.length} câu)</h2>
-            </div>
-            <div id="quiz-score" class="text-sm font-bold bg-purple-50 text-purple-700 px-3 py-1.5 rounded-lg">
-              Điểm: 0 / ${questions.length}
-            </div>
-          </div>
-          <div id="quiz-questions" class="space-y-6"></div>
-        </div>
-      `;
-
-      const qListEl = container.querySelector("#quiz-questions");
-
-      questions.forEach((qObj, qIndex) => {
-        const qCard = document.createElement("div");
-        qCard.className = "p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3";
-        qCard.innerHTML = `
-          <p class="font-semibold text-slate-900 text-sm"><span class="text-blue-600">Câu ${qIndex + 1}:</span> ${qObj.q}</p>
-          <div class="space-y-2 options-box">
-            ${qObj.options.map((opt, optIdx) => `
-              <button data-opt="${optIdx}" class="w-full text-left px-4 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-blue-50 text-sm transition">
-                ${opt}
-              </button>
-            `).join("")}
-          </div>
-          <div class="explanation-box hidden p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-1">
-            <p class="font-bold text-emerald-800">Giải thích chi tiết:</p>
-            <p>${qObj.explanation || "Không có giải thích bổ sung."}</p>
-          </div>
-        `;
-
-        const optionBtns = qCard.querySelectorAll(".options-box button");
-        const expBox = qCard.querySelector(".explanation-box");
-        let isAnswered = false;
-
-        optionBtns.forEach(btn => {
-          btn.onclick = () => {
-            if (isAnswered) return;
-            isAnswered = true;
-            answeredCount++;
-            const selected = parseInt(btn.dataset.opt);
-            const correct = parseInt(qObj.answer);
-
-            optionBtns.forEach((b, idx) => {
-              if (idx === correct) {
-                b.className = "w-full text-left px-4 py-2.5 rounded-lg border-2 border-emerald-600 bg-emerald-100 text-emerald-900 font-semibold text-sm";
-              } else if (idx === selected && selected !== correct) {
-                b.className = "w-full text-left px-4 py-2.5 rounded-lg border-2 border-rose-500 bg-rose-100 text-rose-900 text-sm";
-              }
-            });
-
-            if (selected === correct) score++;
-            container.querySelector("#quiz-score").innerText = `Điểm: ${score} / ${questions.length} (Đã làm ${answeredCount}/${questions.length})`;
-            expBox.classList.remove("hidden");
-          };
-        });
-
-        qListEl.appendChild(qCard);
-      });
-    }
-
-    document.querySelectorAll(".year-btn").forEach(btn => {
-      btn.onclick = () => {
-        currentYear = btn.dataset.year;
-        document.querySelectorAll(".year-btn").forEach(b => {
-          b.className = "year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-white text-slate-700 hover:bg-slate-200";
-        });
-        btn.className = "year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-blue-600 text-white";
-        renderList();
-      };
-    });
-
-    document.querySelectorAll(".type-btn").forEach(btn => {
-      btn.onclick = () => {
-        currentType = btn.dataset.type;
-        document.querySelectorAll(".type-btn").forEach(b => {
-          b.className = "type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600";
-        });
-        btn.className = "type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-800 text-white";
-        renderList();
-      };
-    });
-    document.getElementById("search-input").oninput = renderList;
-
-    const adminModal = document.getElementById("admin-modal");
-    document.getElementById("btn-open-admin").onclick = () => adminModal.classList.remove("hidden");
-    document.getElementById("btn-close-admin").onclick = () => adminModal.classList.add("hidden");
-
-    document.getElementById("adm-type").onchange = (e) => {
-      if (e.target.value === "QUIZ") {
-        document.getElementById("adm-link-box").classList.add("hidden");
-        document.getElementById("adm-quiz-box").classList.remove("hidden");
-      } else {
-        document.getElementById("adm-link-box").classList.remove("hidden");
-        document.getElementById("adm-quiz-box").classList.add("hidden");
-      }
-    };
-
-    document.getElementById("btn-save-item").onclick = async () => {
-      const year = document.getElementById("adm-year").value;
-      const type = document.getElementById("adm-type").value;
-      const subject = document.getElementById("adm-subject").value.trim();
-      const title = document.getElementById("adm-title").value.trim();
-
-      if (!subject || !title) return alert("Vui lòng nhập đầy đủ Tên môn học và Tiêu đề!");
-
-      let payload = { year, type, subject, title, createdAt: Date.now() };
-
-      if (type === "QUIZ") {
-        try {
-          payload.questions = JSON.parse(document.getElementById("adm-quiz-json").value);
-        } catch (err) {
-          return alert("Định dạng JSON câu hỏi không hợp lệ! Hãy kiểm tra lại dấu ngoặc.");
-        }
-      } else {
-        payload.url = document.getElementById("adm-url").value.trim();
-        if (!payload.url) return alert("Vui lòng dán đường dẫn Google Drive hoặc YouTube!");
-      }
-
-      try {
-        await addDoc(collection(db, "medical_resources"), payload);
-        adminModal.classList.add("hidden");
-        await loadItems();
-        alert("Đã lưu thành công!");
-      } catch (error) {
-        alert("Lỗi phân quyền từ máy chủ Firebase: " + error.message);
-      }
-    };
-  </script>
-</body>
-</html>
+      appId: "1:993017623598:web:c41eca8e4bcd

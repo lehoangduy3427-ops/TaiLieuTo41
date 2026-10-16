@@ -159,9 +159,7 @@
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // =========================================================================
-    // CHỖ CẦN SỬA SỐ 1: DÁN firebaseConfig CỦA BẠN VÀO ĐÂY
-    // =========================================================================
+    // ĐÃ SỬA CHUẨN API KEY CHO BẠN (Bỏ chữ A bị thừa ở đầu)
     const firebaseConfig = {
       apiKey: "AIzaSyC4RLqnlarYcjfEoGwRAP8572AfpcZ8XyM",
       authDomain: "tai-lieu-to-41-yds.firebaseapp.com",
@@ -171,9 +169,7 @@
       appId: "1:993017623598:web:c41eca8e4bcdb79e739bbf"
     };
 
-    // =========================================================================
-    // CHỖ CẦN SỬA SỐ 2: GMAIL ADMIN CỦA BẠN (Viết chữ thường, trùng với Bước 2)
-    // =========================================================================
+    // ĐÃ THÊM DẤU NGOẶC KÉP MỞ CHO EMAIL CỦA BẠN
     const ADMIN_EMAILS = [
       "lehoangduy3427@gmail.com"
     ];
@@ -190,14 +186,16 @@
     let allItems = [];
 
     document.getElementById("btn-login").addEventListener("click", async () => {
-      alert("1. Nút bấm ĐÃ ăn! Đang chuẩn bị gọi Google...");
       try {
         await signInWithPopup(auth, provider);
       } catch (err) {
-        alert("2. Google báo lỗi: " + err.code + " - " + err.message);
+        const errEl = document.getElementById("auth-error");
+        errEl.classList.remove("hidden");
+        errEl.innerText = "Lỗi đăng nhập: " + err.code + " - " + err.message;
         console.error(err);
       }
     });
+
     document.getElementById("btn-logout").onclick = () => signOut(auth);
 
     onAuthStateChanged(auth, async (user) => {
@@ -397,4 +395,58 @@
       btn.onclick = () => {
         currentType = btn.dataset.type;
         document.querySelectorAll(".type-btn").forEach(b => {
-          b.className = "type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-6
+          b.className = "type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600";
+        });
+        btn.className = "type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-800 text-white";
+        renderList();
+      };
+    });
+    document.getElementById("search-input").oninput = renderList;
+
+    const adminModal = document.getElementById("admin-modal");
+    document.getElementById("btn-open-admin").onclick = () => adminModal.classList.remove("hidden");
+    document.getElementById("btn-close-admin").onclick = () => adminModal.classList.add("hidden");
+
+    document.getElementById("adm-type").onchange = (e) => {
+      if (e.target.value === "QUIZ") {
+        document.getElementById("adm-link-box").classList.add("hidden");
+        document.getElementById("adm-quiz-box").classList.remove("hidden");
+      } else {
+        document.getElementById("adm-link-box").classList.remove("hidden");
+        document.getElementById("adm-quiz-box").classList.add("hidden");
+      }
+    };
+
+    document.getElementById("btn-save-item").onclick = async () => {
+      const year = document.getElementById("adm-year").value;
+      const type = document.getElementById("adm-type").value;
+      const subject = document.getElementById("adm-subject").value.trim();
+      const title = document.getElementById("adm-title").value.trim();
+
+      if (!subject || !title) return alert("Vui lòng nhập đầy đủ Tên môn học và Tiêu đề!");
+
+      let payload = { year, type, subject, title, createdAt: Date.now() };
+
+      if (type === "QUIZ") {
+        try {
+          payload.questions = JSON.parse(document.getElementById("adm-quiz-json").value);
+        } catch (err) {
+          return alert("Định dạng JSON câu hỏi không hợp lệ! Hãy kiểm tra lại dấu ngoặc.");
+        }
+      } else {
+        payload.url = document.getElementById("adm-url").value.trim();
+        if (!payload.url) return alert("Vui lòng dán đường dẫn Google Drive hoặc YouTube!");
+      }
+
+      try {
+        await addDoc(collection(db, "medical_resources"), payload);
+        adminModal.classList.add("hidden");
+        await loadItems();
+        alert("Đã lưu thành công!");
+      } catch (error) {
+        alert("Lỗi phân quyền từ máy chủ Firebase: " + error.message);
+      }
+    };
+  </script>
+</body>
+</html>

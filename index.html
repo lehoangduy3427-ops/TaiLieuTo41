@@ -189,15 +189,15 @@
     let currentType = "ALL";
     let allItems = [];
 
-    document.getElementById("btn-login").onclick = async () => {
+    document.getElementById("btn-login").addEventListener("click", async () => {
+      alert("1. Nút bấm ĐÃ ăn! Đang chuẩn bị gọi Google...");
       try {
         await signInWithPopup(auth, provider);
       } catch (err) {
-        const errEl = document.getElementById("auth-error");
-        errEl.classList.remove("hidden");
-        errEl.innerText = "Lỗi đăng nhập: " + err.message;
+        alert("2. Google báo lỗi: " + err.code + " - " + err.message);
+        console.error(err);
       }
-    };
+    });
     document.getElementById("btn-logout").onclick = () => signOut(auth);
 
     onAuthStateChanged(auth, async (user) => {

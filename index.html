@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kho Tài Liệu & Trắc Nghiệm Y Khoa (Y1 - Y6)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- MÀN HÌNH CHƯA ĐĂNG NHẬP -->
+  <div id="login-screen" class="flex-1 flex items-center justify-center p-4">
+    <div class="bg-white max-w-md w-full rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+      <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-md">
+        Y+
+      </div>
+      <h1 class="text-2xl font-bold text-slate-900 mb-2">Hệ Thống Học Tập Y Khoa</h1>
+      <p class="text-slate-500 text-sm mb-6">Lưu trữ Slide, Note, Video bài giảng và Ngân hàng trắc nghiệm từ Y1 đến Y6. Vui lòng đăng nhập để truy cập.</p>
+      <button id="btn-login" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow transition flex items-center justify-center gap-3">
+        <svg class="w-5 h-5 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"/>
+        </svg>
+        Đăng nhập bằng Google
+      </button>
+      <p id="auth-error" class="text-xs text-rose-600 mt-4 hidden"></p>
+    </div>
+  </div>
+
+  <!-- GIAO DIỆN CHÍNH SAU KHI ĐĂNG NHẬP -->
+  <div id="app-screen" class="hidden flex-1 flex flex-col">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold">Y+</div>
+          <div>
+            <h1 class="font-bold text-slate-900 leading-tight">Thư Viện Y Khoa Y1 - Y6</h1>
+            <p id="user-badge" class="text-xs text-slate-500"></p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="btn-open-admin" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+            + Quản lý / Up Tài Liệu & Đề
+          </button>
+          <button id="btn-logout" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-2 rounded-lg transition">
+            Đăng xuất
+          </button>
+        </div>
+      </div>
+
+      <!-- Thanh chọn Năm học Y1 - Y6 -->
+      <div class="bg-slate-100 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 flex gap-2 overflow-x-auto py-2" id="year-tabs">
+          <button data-year="Y1" class="year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-blue-600 text-white">Y1</button>
+          <button data-year="Y2" class="year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-white text-slate-700 hover:bg-slate-200">Y2</button>
+          <button data-year="Y3" class="year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-white text-slate-700 hover:bg-slate-200">Y3</button>
+          <button data-year="Y4" class="year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-white text-slate-700 hover:bg-slate-200">Y4</button>
+          <button data-year="Y5" class="year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-white text-slate-700 hover:bg-slate-200">Y5</button>
+          <button data-year="Y6" class="year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-white text-slate-700 hover:bg-slate-200">Y6</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Cột trái: Danh sách -->
+      <div class="lg:col-span-1 space-y-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+          <input id="search-input" type="text" placeholder="Tìm theo tên bài, học phần..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+          <div class="flex gap-1.5 flex-wrap" id="type-filters">
+            <button data-type="ALL" class="type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-800 text-white">Tất cả</button>
+            <button data-type="SLIDE" class="type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">Slide / PDF</button>
+            <button data-type="NOTE" class="type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">Note</button>
+            <button data-type="VIDEO" class="type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">Video</button>
+            <button data-type="QUIZ" class="type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">Đề Trắc Nghiệm</button>
+          </div>
+        </div>
+        <div id="items-list" class="space-y-2.5"></div>
+      </div>
+
+      <!-- Cột phải: Khung Xem -->
+      <div class="lg:col-span-2">
+        <div id="viewer-container" class="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[550px] p-6 flex flex-col justify-center items-center text-slate-400">
+          Chọn một tài liệu hoặc đề thi ở danh sách bên trái để bắt đầu học.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL ADMIN -->
+  <div id="admin-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h2 class="text-lg font-bold text-slate-900">Quản trị viên: Thêm Tài Liệu / Đề Trắc Nghiệm</h2>
+        <button id="btn-close-admin" class="text-slate-400 hover:text-slate-700 font-bold text-xl">&times;</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Năm học</label>
+          <select id="adm-year" class="w-full border rounded-lg px-3 py-2 text-sm">
+            <option value="Y1">Y1</option>
+            <option value="Y2">Y2</option>
+            <option value="Y3">Y3</option>
+            <option value="Y4">Y4</option>
+            <option value="Y5">Y5</option>
+            <option value="Y6">Y6</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Loại nội dung</label>
+          <select id="adm-type" class="w-full border rounded-lg px-3 py-2 text-sm">
+            <option value="SLIDE">Slide / Giáo trình PDF (Google Drive)</option>
+            <option value="NOTE">Note tóm tắt (Google Drive / Docs)</option>
+            <option value="VIDEO">Video bài giảng (YouTube / Drive)</option>
+            <option value="QUIZ">Đề thi Trắc Nghiệm (A, B, C, D)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tên Môn học / Module</label>
+          <input id="adm-subject" type="text" placeholder="VD: Giải phẫu, Sinh lý, Ung bướu..." class="w-full border rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tiêu đề Tài liệu / Đề thi</label>
+          <input id="adm-title" type="text" placeholder="VD: Đề trắc nghiệm Cơ chế bệnh sinh" class="w-full border rounded-lg px-3 py-2 text-sm">
+        </div>
+      </div>
+
+      <div id="adm-link-box">
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Đường dẫn (Link Google Drive hoặc YouTube)</label>
+        <input id="adm-url" type="text" placeholder="Dán link chia sẻ từ Google Drive hoặc YouTube vào đây..." class="w-full border rounded-lg px-3 py-2 text-sm">
+      </div>
+
+      <div id="adm-quiz-box" class="hidden">
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Danh sách câu hỏi định dạng JSON</label>
+        <textarea id="adm-quiz-json" rows="7" class="w-full border rounded-lg p-3 text-xs font-mono" placeholder='[{"q": "Câu hỏi 1?", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "answer": 0, "explanation": "Giải thích..."}]'></textarea>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t">
+        <button id="btn-save-item" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg text-sm">
+          Lưu lên Hệ thống
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIC FIREBASE & ỨNG DỤNG -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // =========================================================================
+    // CHỖ CẦN SỬA SỐ 1: DÁN firebaseConfig CỦA BẠN VÀO ĐÂY
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "AAIzaSyC4RLqnlarYcjfEoGwRAP8572AfpcZ8XyM",
+      authDomain: "tai-lieu-to-41-yds.firebaseapp.com",
+      projectId: "tai-lieu-to-41-yds",
+      storageBucket: "tai-lieu-to-41-yds.firebasestorage.app",
+      messagingSenderId: "993017623598",
+      appId: "1:993017623598:web:c41eca8e4bcdb79e739bbf"
+      measurementId: "G-5JYVED1VXY"
+    };
+
+    // =========================================================================
+    // CHỖ CẦN SỬA SỐ 2: GMAIL ADMIN CỦA BẠN (Viết chữ thường, trùng với Bước 2)
+    // =========================================================================
+    const ADMIN_EMAILS = [
+      lehoangduy3427@gmail.com"
+    ];
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    let currentUser = null;
+    let isAdminUser = false;
+    let currentYear = "Y1";
+    let currentType = "ALL";
+    let allItems = [];
+
+    document.getElementById("btn-login").onclick = async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        const errEl = document.getElementById("auth-error");
+        errEl.classList.remove("hidden");
+        errEl.innerText = "Lỗi đăng nhập: " + err.message;
+      }
+    };
+    document.getElementById("btn-logout").onclick = () => signOut(auth);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        isAdminUser = ADMIN_EMAILS.includes(user.email);
+        document.getElementById("login-screen").classList.add("hidden");
+        document.getElementById("app-screen").classList.remove("hidden");
+        document.getElementById("user-badge").innerText = `${user.email} (${isAdminUser ? 'Quản trị viên - Admin' : 'Thành viên'})`;
+        
+        if (isAdminUser) {
+          document.getElementById("btn-open-admin").classList.remove("hidden");
+        } else {
+          document.getElementById("btn-open-admin").classList.add("hidden");
+        }
+        await loadItems();
+      } else {
+        document.getElementById("login-screen").classList.remove("hidden");
+        document.getElementById("app-screen").classList.add("hidden");
+      }
+    });
+
+    async function loadItems() {
+      const q = query(collection(db, "medical_resources"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      allItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderList();
+    }
+
+    function renderList() {
+      const listEl = document.getElementById("items-list");
+      const keyword = document.getElementById("search-input").value.toLowerCase();
+
+      const filtered = allItems.filter(item => {
+        const matchYear = item.year === currentYear;
+        const matchType = currentType === "ALL" || item.type === currentType;
+        const matchSearch = item.title.toLowerCase().includes(keyword) || item.subject.toLowerCase().includes(keyword);
+        return matchYear && matchType && matchSearch;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="p-6 text-center text-sm text-slate-400 bg-white rounded-xl border">Chưa có tài liệu nào trong mục này.</div>`;
+        return;
+      }
+
+      const badgeColors = {
+        SLIDE: "bg-blue-100 text-blue-700",
+        NOTE: "bg-amber-100 text-amber-700",
+        VIDEO: "bg-rose-100 text-rose-700",
+        QUIZ: "bg-purple-100 text-purple-700"
+      };
+
+      listEl.innerHTML = filtered.map(item => `
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 hover:border-blue-500 transition cursor-pointer shadow-sm flex justify-between items-start gap-2" data-id="${item.id}">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeColors[item.type]}">${item.type}</span>
+              <span class="text-xs font-medium text-slate-500">${item.subject}</span>
+            </div>
+            <h3 class="font-semibold text-sm text-slate-800">${item.title}</h3>
+          </div>
+          ${isAdminUser ? `<button class="btn-delete text-xs text-red-500 hover:underline px-2 py-1" data-del="${item.id}">Xóa</button>` : ''}
+        </div>
+      `).join("");
+
+      listEl.querySelectorAll("[data-id]").forEach(el => {
+        el.onclick = (e) => {
+          if (e.target.classList.contains("btn-delete")) return;
+          const item = allItems.find(i => i.id === el.dataset.id);
+          openViewer(item);
+        };
+      });
+
+      listEl.querySelectorAll(".btn-delete").forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          if (confirm("Bạn có chắc chắn muốn xóa mục này?")) {
+            await deleteDoc(doc(db, "medical_resources", btn.dataset.del));
+            await loadItems();
+          }
+        };
+      });
+    }
+
+    function convertToEmbedUrl(url) {
+      if (!url) return "";
+      const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (driveMatch) return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+      const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+      if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+      return url;
+    }
+
+    function openViewer(item) {
+      const viewer = document.getElementById("viewer-container");
+      if (item.type !== "QUIZ") {
+        const embedUrl = convertToEmbedUrl(item.url);
+        viewer.innerHTML = `
+          <div class="w-full h-full flex flex-col">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b">
+              <div>
+                <span class="text-xs font-semibold text-blue-600">${item.year} • ${item.subject}</span>
+                <h2 class="text-lg font-bold text-slate-900">${item.title}</h2>
+              </div>
+              <a href="${item.url}" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium">Mở tab gốc ↗</a>
+            </div>
+            <iframe src="${embedUrl}" class="w-full flex-1 min-h-[500px] rounded-lg border" allow="autoplay; fullscreen"></iframe>
+          </div>
+        `;
+      } else {
+        renderQuiz(item, viewer);
+      }
+    }
+
+    function renderQuiz(item, container) {
+      const questions = item.questions || [];
+      let score = 0;
+      let answeredCount = 0;
+
+      container.innerHTML = `
+        <div class="w-full text-left space-y-6">
+          <div class="border-b pb-3 flex justify-between items-center">
+            <div>
+              <span class="text-xs font-semibold text-purple-600">${item.year} • ${item.subject}</span>
+              <h2 class="text-lg font-bold text-slate-900">${item.title} (${questions.length} câu)</h2>
+            </div>
+            <div id="quiz-score" class="text-sm font-bold bg-purple-50 text-purple-700 px-3 py-1.5 rounded-lg">
+              Điểm: 0 / ${questions.length}
+            </div>
+          </div>
+          <div id="quiz-questions" class="space-y-6"></div>
+        </div>
+      `;
+
+      const qListEl = container.querySelector("#quiz-questions");
+
+      questions.forEach((qObj, qIndex) => {
+        const qCard = document.createElement("div");
+        qCard.className = "p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3";
+        qCard.innerHTML = `
+          <p class="font-semibold text-slate-900 text-sm"><span class="text-blue-600">Câu ${qIndex + 1}:</span> ${qObj.q}</p>
+          <div class="space-y-2 options-box">
+            ${qObj.options.map((opt, optIdx) => `
+              <button data-opt="${optIdx}" class="w-full text-left px-4 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-blue-50 text-sm transition">
+                ${opt}
+              </button>
+            `).join("")}
+          </div>
+          <div class="explanation-box hidden p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-1">
+            <p class="font-bold text-emerald-800">Giải thích chi tiết:</p>
+            <p>${qObj.explanation || "Không có giải thích bổ sung."}</p>
+          </div>
+        `;
+
+        const optionBtns = qCard.querySelectorAll(".options-box button");
+        const expBox = qCard.querySelector(".explanation-box");
+        let isAnswered = false;
+
+        optionBtns.forEach(btn => {
+          btn.onclick = () => {
+            if (isAnswered) return;
+            isAnswered = true;
+            answeredCount++;
+            const selected = parseInt(btn.dataset.opt);
+            const correct = parseInt(qObj.answer);
+
+            optionBtns.forEach((b, idx) => {
+              if (idx === correct) {
+                b.className = "w-full text-left px-4 py-2.5 rounded-lg border-2 border-emerald-600 bg-emerald-100 text-emerald-900 font-semibold text-sm";
+              } else if (idx === selected && selected !== correct) {
+                b.className = "w-full text-left px-4 py-2.5 rounded-lg border-2 border-rose-500 bg-rose-100 text-rose-900 text-sm";
+              }
+            });
+
+            if (selected === correct) score++;
+            container.querySelector("#quiz-score").innerText = `Điểm: ${score} / ${questions.length} (Đã làm ${answeredCount}/${questions.length})`;
+            expBox.classList.remove("hidden");
+          };
+        });
+
+        qListEl.appendChild(qCard);
+      });
+    }
+
+    document.querySelectorAll(".year-btn").forEach(btn => {
+      btn.onclick = () => {
+        currentYear = btn.dataset.year;
+        document.querySelectorAll(".year-btn").forEach(b => {
+          b.className = "year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-white text-slate-700 hover:bg-slate-200";
+        });
+        btn.className = "year-btn px-5 py-1.5 rounded-lg font-semibold text-sm bg-blue-600 text-white";
+        renderList();
+      };
+    });
+
+    document.querySelectorAll(".type-btn").forEach(btn => {
+      btn.onclick = () => {
+        currentType = btn.dataset.type;
+        document.querySelectorAll(".type-btn").forEach(b => {
+          b.className = "type-btn px-3 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-6
